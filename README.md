@@ -1,6 +1,6 @@
 # Catalog Clinic
 
-A practical product-catalog checker that runs entirely in the browser. Built around catalog analysis, a field I work in, rather than a generic dashboard.
+A practical product-catalog checker that runs entirely in the browser. Built around catalog analysis, a field I work in.
 
 ## Run
 
@@ -12,7 +12,7 @@ node tests/check.cjs
 
 ## What works
 
-CSV import (comma or semicolon), quoted values and multiline cells, column mapping, instant synthetic sample, duplicate SKU checks, missing fields, numeric price/stock validation, self-parent detection, variant collisions, search/severity filters, paginated data preview, issue CSV download, reversible whitespace/deduplication preview, cleaned CSV download, and a share summary containing totals only.
+CSV import, quoted values and multiline cells, column mapping, instant synthetic sample, duplicate SKU checks, missing fields, numeric price/stock validation, self-parent detection, variant collisions, search/severity filters, paginated data preview, issue CSV download, reversible whitespace/deduplication preview, cleaned CSV download, and a share summary containing totals only.
 
 The sample contains 16 rows with 11 findings across 10 rows (38/100 clean-row score). Safe cleanup trims one cell and removes one repeated row, resulting in 15 rows with seven affected rows (53/100). It does not invent missing titles, prices or identifiers.
 

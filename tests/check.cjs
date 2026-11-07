@@ -1,0 +1,23 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync('dist/index.html','utf8');const code=html.match(/<script id="engine">([\s\S]*?)<\/script>/)[1];const ctx={module:{exports:{}}};vm.runInNewContext(code,ctx);const C=ctx.module.exports;let passed=0;
+function test(name,fn){fn();passed++;console.log('PASS '+name);}
+const map={sku:0,title:1,price:2,stock:3,parent:4,variant:5};
+test('quoted commas, multiline text and escaped quotes',()=>{const d=C.parseCSV('sku,title,price\r\n001,"A, B\nwith ""quotes""",2.50');assert.equal(d.rows[0][0],'001');assert.equal(d.rows[0][1],'A, B\nwith "quotes"');});
+test('semicolon delimiter',()=>assert.equal(C.parseCSV('sku;title;price\nx;Test;1').rows[0][2],'1'));
+test('empty input rejected',()=>assert.throws(()=>C.parseCSV('')));
+test('header only rejected',()=>assert.throws(()=>C.parseCSV('sku,title,price')));
+test('duplicate headers rejected',()=>assert.throws(()=>C.parseCSV('sku,SKU\nx,y')));
+test('unclosed quote rejected',()=>assert.throws(()=>C.parseCSV('sku,title\nx,"open')));
+test('uneven records rejected',()=>assert.throws(()=>C.parseCSV('sku,title\nx,a,b')));
+test('valid rows pass',()=>{const r=C.audit([['001','Test','1.00','0','','']],map);assert.equal(r.score,100);assert.equal(r.issues.length,0);});
+test('zero price accepted',()=>assert.equal(C.audit([['001','Test','0','0','','']],map).score,100));
+test('missing fields and invalid numeric values caught',()=>assert.equal(C.audit([['','','NaN','-1','','']],map).issues.length,4));
+test('case-insensitive duplicate SKUs flag every row',()=>{const r=C.audit([['A','First','1','','',''],['a','Second','2','','','']],map);assert.equal(r.affected,2);assert.equal(r.score,0);});
+test('variant collisions and self parent',()=>{const r=C.audit([['A','First','1','','A','Blue'],['B','Second','2','','A','Blue']],map);assert.equal(r.issues.filter(x=>x.kind==='Variant collision').length,2);assert.ok(r.issues.some(x=>x.kind==='Self-parent link'));});
+test('absent parent row is permitted',()=>assert.equal(C.audit([['A','First','1','','FAMILY','Blue']],map).score,100));
+test('cleanup retains conflicting rows and removes exact duplicates',()=>{const r=C.cleanup([[' A ','First'],['A','First'],['A','Second']]);assert.equal(r.removed,1);assert.equal(r.rows.length,2);assert.equal(r.trimmed,1);});
+test('CSV export escapes quotes and neutralizes formulas',()=>{const csv=C.csv([['=1+1','"quoted"','0001']]);assert.ok(csv.includes("'=1+1"));assert.ok(csv.includes('""quoted""'));assert.ok(csv.includes('0001'));});
+test('10,000-row catalog',()=>{const rows=Array.from({length:10000},(_,i)=>['SKU'+i,'Product '+i,'1','0','','']);assert.equal(C.audit(rows,map).score,100);});
+test('row limit',()=>assert.throws(()=>C.parseCSV('sku,title,price\n'+Array(10001).fill('x,Product,1').join('\n'))));
+test('HTML-sensitive strings remain raw data',()=>{const d=C.parseCSV('sku,title,price\nx,<img src=x onerror=alert(1)>,1');assert.ok(d.rows[0][1].includes('<img'));});
+console.log(passed+' checks passed');

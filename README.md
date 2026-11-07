@@ -1,6 +1,6 @@
 # Catalog Clinic
 
-A Paul-Andrei Covalschi portfolio project: a practical product-catalog checker that runs entirely in the browser. Built around catalog analysis, a field I work in, rather than a generic dashboard.
+A practical product-catalog checker that runs entirely in the browser. Built around catalog analysis, a field I work in, rather than a generic dashboard.
 
 ## Run
 
